@@ -1,0 +1,67 @@
+name: "Continuous Integration"
+
+on:
+  - push
+  - pull_request
+
+env:
+  CARGO_TERM_COLOR: "always"
+  TZ: "UTC"
+  RUST_BACKTRACE: "full"
+  RUSTFLAGS: "-C opt-level=0 -g"
+jobs:
+  macos:
+    strategy:
+      matrix:
+        toolchain:
+          - nightly
+          - beta
+          - stable
+          - 1.86.0
+          - 1.85.1
+          - 1.84.1
+          - 1.83.0
+          - 1.82.0
+          - 1.81.0
+          - 1.80.1
+          - 1.79.0
+          - 1.78.0
+          - 1.77.2
+          - 1.76.0
+          - 1.75.0
+          - 1.74.1
+
+    name: Check, Build and Run
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - name: check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+      - name: build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+
+      - name: install
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --path .
+
+      - name: pat /System/Library/LaunchAgents
+        run: find /System/Library/LaunchAgents -type f -name '*.plist' -exec pat {} \;
+
+      - name: pat /Library/LaunchAgents
+        run: find /Library/LaunchAgents -type f -name '*.plist' -exec pat {} \;
+
+      - name: pat /System/Library/LaunchDaemons
+        run: find /System/Library/LaunchDaemons -type f -name '*.plist' -exec pat {} \;
+
+      - name: pat /Library/LaunchDaemons
+        run: find /Library/LaunchDaemons -type f -name '*.plist' -exec pat {} \;
